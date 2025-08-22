@@ -8,6 +8,9 @@ import { Database, Rows, Columns, HardDrive, BarChart3, Filter, TrendingUp } fro
 import { DataVisualization } from './DataVisualization';
 import { DataManipulation } from './DataManipulation';
 import { DataStatistics } from './DataStatistics';
+import { DataCleaning } from './DataCleaning';
+import { AdvancedAnalytics } from './AdvancedAnalytics';
+import { DataExport } from './DataExport';
 
 interface DataPreviewProps {
   dataset: Dataset;
@@ -66,10 +69,10 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ dataset, maxRows = 100
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="preview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="preview" className="flex items-center gap-2">
             <Database className="w-4 h-4" />
-            Data Preview
+            Preview
           </TabsTrigger>
           <TabsTrigger value="visualize" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -77,11 +80,23 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ dataset, maxRows = 100
           </TabsTrigger>
           <TabsTrigger value="manipulate" className="flex items-center gap-2">
             <Filter className="w-4 h-4" />
-            Filter & Sort
+            Filter
           </TabsTrigger>
           <TabsTrigger value="statistics" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Statistics
+            Stats
+          </TabsTrigger>
+          <TabsTrigger value="cleaning" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Clean
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            AI Insights
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Export
           </TabsTrigger>
         </TabsList>
 
@@ -177,6 +192,21 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ dataset, maxRows = 100
 
         <TabsContent value="statistics">
           <DataStatistics dataset={currentDataset} />
+        </TabsContent>
+
+        <TabsContent value="cleaning">
+          <DataCleaning 
+            dataset={currentDataset} 
+            onDatasetChange={setCurrentDataset}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <AdvancedAnalytics dataset={currentDataset} />
+        </TabsContent>
+
+        <TabsContent value="export">
+          <DataExport dataset={currentDataset} />
         </TabsContent>
       </Tabs>
     </div>

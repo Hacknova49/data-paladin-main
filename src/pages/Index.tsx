@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { DataPreview } from '@/components/DataPreview';
 import { Dataset } from '@/types/data';
-import { analyzeDataset } from '@/utils/dataUtils';
+import { analyzeDataset, generateDataProfile } from '@/utils/dataUtils';
 import { BarChart3, Brain, Sparkles } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 const Index = () => {
   const [dataset, setDataset] = useState<Dataset | null>(null);
@@ -11,12 +12,26 @@ const Index = () => {
 
   const handleDataLoaded = (data: any[], filename: string) => {
     setIsLoading(true);
+    toast.success(`Loading ${filename}...`);
+    
     // Simulate processing time for better UX
     setTimeout(() => {
       const analyzedDataset = analyzeDataset(data, filename);
+      const profile = generateDataProfile(analyzedDataset);
+      
+      // Show data quality summary
+      const qualityScore = Math.round(profile.overview.completeness);
+      if (qualityScore >= 90) {
+        toast.success(`Dataset loaded! Data quality: ${qualityScore}% (Excellent)`);
+      } else if (qualityScore >= 70) {
+        toast.success(`Dataset loaded! Data quality: ${qualityScore}% (Good)`);
+      } else {
+        toast.success(`Dataset loaded! Data quality: ${qualityScore}% (Needs cleaning)`);
+      }
+      
       setDataset(analyzedDataset);
       setIsLoading(false);
-    }, 1000);
+    }, 1500);
   };
 
   return (
