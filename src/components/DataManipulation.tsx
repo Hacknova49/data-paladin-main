@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dataset } from '@/types/data';
+import { Dataset, FilterRule, SortDirection } from '@/types/data';
+import { useDataProcessing } from '@/hooks/useDataProcessing';
 import { Filter, SortAsc, SortDesc, Trash2, Eye, EyeOff, Search } from 'lucide-react';
 
 interface DataManipulationProps {
@@ -14,99 +15,30 @@ interface DataManipulationProps {
   onDatasetChange: (newDataset: Dataset) => void;
 }
 
-interface FilterRule {
-  column: string;
-  operator: 'equals' | 'contains' | 'greater' | 'less' | 'not_equals';
-  value: string;
-}
-
 export const DataManipulation: React.FC<DataManipulationProps> = ({ dataset, onDatasetChange }) => {
-  const [sortColumn, setSortColumn] = useState<string>('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [filterRules, setFilterRules] = useState<FilterRule[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set(dataset.columns.map(col => col.name)));
 
-  const filteredAndSortedData = useMemo(() => {
-    let data = [...dataset.rows];
-
-    // Apply search filter
-    if (searchTerm) {
-      data = data.filter(row =>
-        Object.values(row).some(value =>
-          value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
-
-    // Apply filter rules
-    filterRules.forEach(rule => {
-      if (rule.column && rule.value) {
-        data = data.filter(row => {
-          const cellValue = row[rule.column]?.toString().toLowerCase() || '';
-          const filterValue = rule.value.toLowerCase();
-
-          switch (rule.operator) {
-            case 'equals':
-              return cellValue === filterValue;
-            case 'contains':
-              return cellValue.includes(filterValue);
-            case 'not_equals':
-              return cellValue !== filterValue;
-            case 'greater':
-              return parseFloat(cellValue) > parseFloat(filterValue);
-            case 'less':
-              return parseFloat(cellValue) < parseFloat(filterValue);
-            default:
-              return true;
-          }
-        });
-      }
-    });
-
-    // Apply sorting
-    if (sortColumn) {
-      data.sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
-        
-        if (aVal === bVal) return 0;
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-
-        const isNumeric = !isNaN(Number(aVal)) && !isNaN(Number(bVal));
-        
-        if (isNumeric) {
-          const comparison = Number(aVal) - Number(bVal);
-          return sortDirection === 'asc' ? comparison : -comparison;
-        } else {
-          const comparison = String(aVal).localeCompare(String(bVal));
-          return sortDirection === 'asc' ? comparison : -comparison;
-        }
-      });
-    }
-
-    return data;
-  }, [dataset.rows, searchTerm, filterRules, sortColumn, sortDirection]);
+  const {
+    searchTerm,
+    filterRules,
+    sortColumn,
+    sortDirection,
+    filteredRows,
+    totalRows,
+    isProcessing,
+    setSearchTerm,
+    setSortColumn,
+    setSortDirection,
+    addFilterRule,
+    updateFilterRule,
+    removeFilterRule,
+    clearAllFilters
+  } = useDataProcessing({ dataset });
 
   const visibleColumns = dataset.columns.filter(col => 
     selectedColumns.has(col.name) && !hiddenColumns.has(col.name)
   );
-
-  const addFilterRule = () => {
-    setFilterRules([...filterRules, { column: '', operator: 'contains', value: '' }]);
-  };
-
-  const updateFilterRule = (index: number, field: keyof FilterRule, value: string) => {
-    const newRules = [...filterRules];
-    newRules[index] = { ...newRules[index], [field]: value };
-    setFilterRules(newRules);
-  };
-
-  const removeFilterRule = (index: number) => {
-    setFilterRules(filterRules.filter((_, i) => i !== index));
-  };
 
   const toggleColumnVisibility = (columnName: string) => {
     const newHidden = new Set(hiddenColumns);
@@ -302,7 +234,7 @@ export const DataManipulation: React.FC<DataManipulationProps> = ({ dataset, onD
       <Card>
         <CardHeader>
           <CardTitle>
-            Filtered Results ({filteredAndSortedData.length} rows)
+            Filtered Results ({totalRows} rows) {isProcessing && '(Processing...)'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -325,7 +257,7 @@ export const DataManipulation: React.FC<DataManipulationProps> = ({ dataset, onD
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAndSortedData.slice(0, 100).map((row, rowIndex) => (
+                  {filteredRows.slice(0, 100).map((row, rowIndex) => (
                     <TableRow key={rowIndex}>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {rowIndex + 1}

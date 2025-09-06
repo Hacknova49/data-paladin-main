@@ -5,50 +5,105 @@ import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useAsyncOperation } from '@/hooks/useAsyncOperation';
+import { toast } from '@/components/ui/sonner';
 
 interface FileUploadProps {
   onDataLoaded: (data: any[], filename: string) => void;
   isLoading?: boolean;
 }
 
+interface ParsedFileResult {
+  data: any[];
+  filename: string;
+}
+
 export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading }) => {
-  const processFile = useCallback((file: File) => {
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
-    if (fileExtension === 'csv') {
-      Papa.parse(file, {
-        complete: (results) => {
-          if (results.data && results.data.length > 0) {
-            onDataLoaded(results.data as any[], file.name);
-          }
-        },
-        header: true,
-        skipEmptyLines: true,
-        error: (error) => {
-          console.error('CSV parsing error:', error);
-        }
-      });
-    } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = new Uint8Array(e.target?.result as ArrayBuffer);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          onDataLoaded(jsonData, file.name);
-        } catch (error) {
-          console.error('Excel parsing error:', error);
-        }
-      };
-      reader.readAsArrayBuffer(file);
+  const { execute: executeFileProcessing, isLoading: isProcessingFile } = useAsyncOperation<ParsedFileResult>({
+    onSuccess: (result) => {
+      onDataLoaded(result.data, result.filename);
+    },
+    onError: (error) => {
+      console.error('File processing error:', error);
     }
-  }, [onDataLoaded]);
+  });
+
+  const processFile = useCallback((file: File) => {
+    executeFileProcessing(async () => {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      if (!fileExtension || !['csv', 'xlsx', 'xls'].includes(fileExtension)) {
+        throw new Error('Unsupported file format. Please upload CSV or Excel files.');
+      }
+
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        throw new Error('File size too large. Please upload files smaller than 50MB.');
+      }
+      
+      if (fileExtension === 'csv') {
+        return new Promise<ParsedFileResult>((resolve, reject) => {
+          Papa.parse(file, {
+            complete: (results) => {
+              if (results.errors.length > 0) {
+                reject(new Error(`CSV parsing error: ${results.errors[0].message}`));
+                return;
+              }
+              
+              if (!results.data || results.data.length === 0) {
+                reject(new Error('No data found in the CSV file.'));
+                return;
+              }
+              
+              resolve({ data: results.data as any[], filename: file.name });
+            },
+            header: true,
+            skipEmptyLines: true,
+            error: (error) => {
+              reject(new Error(`CSV parsing error: ${error.message}`));
+            }
+          });
+        });
+      } else {
+        return new Promise<ParsedFileResult>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const data = new Uint8Array(e.target?.result as ArrayBuffer);
+              const workbook = XLSX.read(data, { type: 'array' });
+              
+              if (workbook.SheetNames.length === 0) {
+                reject(new Error('No sheets found in the Excel file.'));
+                return;
+              }
+              
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const jsonData = XLSX.utils.sheet_to_json(worksheet);
+              
+              if (jsonData.length === 0) {
+                reject(new Error('No data found in the Excel file.'));
+                return;
+              }
+              
+              resolve({ data: jsonData, filename: file.name });
+            } catch (error) {
+              reject(new Error(`Excel parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`));
+            }
+          };
+          reader.onerror = () => {
+            reject(new Error('Failed to read the file.'));
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      }
+    });
+  }, [executeFileProcessing]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       processFile(acceptedFiles[0]);
+    } else {
+      toast.error('Please select a valid CSV or Excel file.');
     }
   }, [processFile]);
 
@@ -60,15 +115,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading 
       'application/vnd.ms-excel': ['.xls']
     },
     multiple: false,
-    disabled: isLoading
+    disabled: isLoading || isProcessingFile
   });
+
+  const isDisabled = isLoading || isProcessingFile;
 
   return (
     <Card className={cn(
       "border-2 border-dashed border-border transition-all duration-200 cursor-pointer",
       "hover:border-primary/50 hover:bg-accent/5",
       isDragActive && "border-primary bg-primary/5",
-      isLoading && "opacity-50 cursor-not-allowed"
+      isDisabled && "opacity-50 cursor-not-allowed"
     )}>
       <div
         {...getRootProps()}
@@ -105,7 +162,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading 
           </div>
         </div>
         
-        {isLoading && (
+        {isDisabled && (
           <div className="text-sm text-primary">
             Processing your file...
           </div>

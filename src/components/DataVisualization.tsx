@@ -1,28 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, LineChart, Line, ScatterChart, Scatter, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Dataset } from '@/types/data';
+import { Dataset, ChartConfig } from '@/types/data';
 import { BarChart3, LineChart as LineChartIcon, Zap, PieChart as PieChartIcon, Download } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 interface DataVisualizationProps {
   dataset: Dataset;
 }
 
+type ChartType = ChartConfig['type'];
+
 const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export const DataVisualization: React.FC<DataVisualizationProps> = ({ dataset }) => {
-  const [chartType, setChartType] = useState<'bar' | 'line' | 'scatter' | 'pie'>('bar');
+  const [chartType, setChartType] = useState<ChartType>('bar');
   const [xColumn, setXColumn] = useState<string>('');
   const [yColumn, setYColumn] = useState<string>('');
 
-  const numericColumns = dataset.columns.filter(col => col.type === 'numeric');
-  const categoricalColumns = dataset.columns.filter(col => col.type === 'categorical' || col.type === 'text');
-  const allColumns = dataset.columns;
+  const { numericColumns, categoricalColumns, allColumns } = useMemo(() => ({
+    numericColumns: dataset.columns.filter(col => col.type === 'numeric'),
+    categoricalColumns: dataset.columns.filter(col => col.type === 'categorical' || col.type === 'text'),
+    allColumns: dataset.columns
+  }), [dataset.columns]);
 
-  const prepareChartData = () => {
+  const chartData = useMemo(() => {
     if (!xColumn || (chartType !== 'pie' && !yColumn)) return [];
 
     if (chartType === 'pie') {
@@ -49,9 +54,24 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({ dataset })
         [xColumn]: row[xColumn],
         [yColumn]: parseFloat(row[yColumn]) || 0
       }));
-  };
+  }, [dataset.rows, xColumn, yColumn, chartType]);
 
-  const chartData = prepareChartData();
+  const handleChartTypeChange = useCallback((type: ChartType) => {
+    setChartType(type);
+    // Reset columns when changing chart type
+    if (type === 'pie') {
+      setYColumn('');
+    }
+  }, []);
+
+  const handleExportChart = useCallback(() => {
+    try {
+      // This would implement actual chart export functionality
+      toast.success('Chart export feature coming soon!');
+    } catch (error) {
+      toast.error('Failed to export chart');
+    }
+  }, []);
 
   const renderChart = () => {
     if (chartData.length === 0) {
@@ -160,7 +180,7 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({ dataset })
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Data Visualization</span>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExportChart}>
             <Download className="w-4 h-4 mr-2" />
             Export Chart
           </Button>
@@ -179,7 +199,7 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({ dataset })
               key={type}
               variant={chartType === type ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartType(type)}
+              onClick={() => handleChartTypeChange(type)}
               className="flex items-center gap-2"
             >
               <Icon className="w-4 h-4" />

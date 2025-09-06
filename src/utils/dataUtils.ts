@@ -1,6 +1,11 @@
-import { DataColumn, Dataset } from '@/types/data';
+import { DataColumn, Dataset, DataType, DataProfile } from '@/types/data';
 
-export const detectColumnType = (values: any[]): 'numeric' | 'categorical' | 'datetime' | 'text' => {
+/**
+ * Detects the data type of a column based on its values
+ * @param values Array of values to analyze
+ * @returns The detected data type
+ */
+export const detectColumnType = (values: any[]): DataType => {
   // Remove null/undefined values for analysis
   const cleanValues = values.filter(v => v !== null && v !== undefined && v !== '');
   
@@ -30,6 +35,12 @@ export const detectColumnType = (values: any[]): 'numeric' | 'categorical' | 'da
   return 'text';
 };
 
+/**
+ * Analyzes a dataset and returns structured data with column information
+ * @param rows Raw data rows
+ * @param filename Name of the source file
+ * @returns Analyzed dataset structure
+ */
 export const analyzeDataset = (rows: Record<string, any>[], filename: string): Dataset => {
   if (rows.length === 0) {
     return {
@@ -70,6 +81,11 @@ export const analyzeDataset = (rows: Record<string, any>[], filename: string): D
   };
 };
 
+/**
+ * Formats bytes into human-readable format
+ * @param bytes Number of bytes
+ * @returns Formatted string
+ */
 export const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -78,16 +94,26 @@ export const formatBytes = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-export const getColumnIcon = (type: string): string => {
-  switch (type) {
-    case 'numeric': return '🔢';
-    case 'categorical': return '🏷️';
-    case 'datetime': return '📅';
-    case 'text': return '📝';
-    default: return '❓';
-  }
+/**
+ * Returns an emoji icon for a given data type
+ * @param type Data type
+ * @returns Emoji string
+ */
+export const getColumnIcon = (type: DataType): string => {
+  const iconMap: Record<DataType, string> = {
+    numeric: '🔢',
+    categorical: '🏷️',
+    datetime: '📅',
+    text: '📝'
+  };
+  return iconMap[type] || '❓';
 };
 
+/**
+ * Detects outliers in numeric data using IQR method
+ * @param values Array of numeric values
+ * @returns Array of outlier values
+ */
 export const detectOutliers = (values: number[]): number[] => {
   if (values.length === 0) return [];
   
@@ -101,6 +127,12 @@ export const detectOutliers = (values: number[]): number[] => {
   return values.filter(v => v < lowerBound || v > upperBound);
 };
 
+/**
+ * Calculates Pearson correlation coefficient between two numeric arrays
+ * @param x First array
+ * @param y Second array
+ * @returns Correlation coefficient (-1 to 1)
+ */
 export const calculateCorrelation = (x: number[], y: number[]): number => {
   if (x.length !== y.length || x.length === 0) return 0;
   
@@ -117,8 +149,13 @@ export const calculateCorrelation = (x: number[], y: number[]): number => {
   return denominator === 0 ? 0 : numerator / denominator;
 };
 
-export const generateDataProfile = (dataset: Dataset) => {
-  const profile = {
+/**
+ * Generates a comprehensive data profile for quality assessment
+ * @param dataset Dataset to analyze
+ * @returns Data profile with quality metrics
+ */
+export const generateDataProfile = (dataset: Dataset): DataProfile => {
+  const profile: DataProfile = {
     overview: {
       totalRows: dataset.totalRows,
       totalColumns: dataset.totalColumns,
@@ -129,7 +166,8 @@ export const generateDataProfile = (dataset: Dataset) => {
       duplicates: 0,
       missingValues: 0,
       outliers: 0,
-      inconsistencies: 0
+      inconsistentTypes: 0,
+      textIssues: 0
     },
     columns: dataset.columns.map(col => ({
       name: col.name,
@@ -162,4 +200,62 @@ export const generateDataProfile = (dataset: Dataset) => {
   });
   
   return profile;
+};
+
+/**
+ * Debounces a function call
+ * @param func Function to debounce
+ * @param wait Wait time in milliseconds
+ * @returns Debounced function
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+/**
+ * Safely parses a numeric value
+ * @param value Value to parse
+ * @returns Parsed number or null if invalid
+ */
+export const safeParseNumber = (value: any): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return isNaN(parsed) || !isFinite(parsed) ? null : parsed;
+};
+
+/**
+ * Calculates basic statistics for numeric data
+ * @param values Array of numeric values
+ * @returns Statistics object
+ */
+export const calculateBasicStats = (values: number[]) => {
+  if (values.length === 0) return null;
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  const mean = sum / values.length;
+  
+  const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+  const std = Math.sqrt(variance);
+  
+  const median = sorted.length % 2 === 0
+    ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+    : sorted[Math.floor(sorted.length / 2)];
+  
+  return {
+    mean,
+    median,
+    std,
+    variance,
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+    count: values.length
+  };
 };
