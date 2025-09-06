@@ -85,3 +85,4 @@ export interface DataSummary {
   correlationMatrix?: number[][];
   missingValuesReport: Record<string, number>;
   duplicateRows: number;
+}
