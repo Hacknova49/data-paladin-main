@@ -1,43 +1,37 @@
 import React, { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
-import { DataPreview } from '@/components/DataPreview';
-import { PythonBackendStatus } from '@/components/PythonBackendStatus';
+import { DataTable } from '@/components/DataTable';
+import { PixelBlast } from '@/components/PixelBlast';
 import { Dataset } from '@/types/data';
-import { useDatasetAnalysis, usePythonBackendHealth } from '@/hooks/usePythonApi';
+import { analyzeDataset } from '@/utils/dataAnalysis';
 import { BarChart3, Brain, Sparkles } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
 
 const Index = () => {
   const [dataset, setDataset] = useState<Dataset | null>(null);
-  const { execute: analyzeData, loading: isLoading } = useDatasetAnalysis();
-  const { isHealthy: isPythonHealthy } = usePythonBackendHealth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleDataLoaded = async (data: any[], filename: string) => {
-    toast.success(`Loading ${filename}...`);
+    setIsLoading(true);
     
     try {
-      const analyzedDataset = await analyzeData(() => 
-        import('@/services/pythonApi').then(api => api.analyzeDataset(data, filename))
-      );
-      
-      if (analyzedDataset.qualityScore >= 90) {
-        toast.success(`Dataset loaded successfully!`);
-      }
-      
+      // Analyze the dataset
+      const analyzedDataset = analyzeDataset(data, filename);
       setDataset(analyzedDataset);
     } catch (error) {
       console.error('Failed to analyze dataset:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Animated Background */}
+      <PixelBlast className="opacity-30" />
+      
       {/* Hero Section */}
-      <div className="border-b bg-gradient-to-br from-background to-accent/5">
+      <div className="relative z-10 border-b bg-gradient-to-br from-background/95 to-accent/5 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-16">
-          {/* Python Backend Status */}
-          <PythonBackendStatus />
-          
           <div className="text-center space-y-6 max-w-4xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Brain className="w-8 h-8 text-primary" />
@@ -47,7 +41,7 @@ const Index = () => {
               <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <p className="text-xl lg:text-2xl text-muted-foreground leading-relaxed">
-              Your friendly data science companion powered by Python. Upload any CSV or Excel file and explore it with 
+              Your intelligent data analysis companion. Upload any CSV or Excel file and explore it with 
               powerful analytics, beautiful visualizations, and AI-powered insights — no coding required.
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -61,7 +55,7 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
-                <span>Python-Powered</span>
+                <span>AI-Powered</span>
               </div>
             </div>
           </div>
@@ -69,17 +63,16 @@ const Index = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="relative z-10 container mx-auto px-4 py-8">
         {!dataset ? (
           <div className="max-w-2xl mx-auto">
             <FileUpload 
               onDataLoaded={handleDataLoaded} 
               isLoading={isLoading}
-              disabled={!isPythonHealthy}
             />
           </div>
         ) : (
-          <DataPreview dataset={dataset} />
+          <DataTable dataset={dataset} />
         )}
       </div>
     </div>
