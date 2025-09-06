@@ -1,0 +1,10 @@
+# Python Core Data Analysis Library Requirements
+# No external dependencies required - uses only Python standard library
+
+# Optional dependencies for enhanced functionality:
+# pandas>=1.3.0          # For advanced data manipulation
+# numpy>=1.20.0          # For numerical computations
+# scikit-learn>=1.0.0    # For machine learning algorithms
+# matplotlib>=3.5.0      # For plotting and visualization
+# seaborn>=0.11.0        # For statistical visualization
+# plotly>=5.0.0          # For interactive charts
