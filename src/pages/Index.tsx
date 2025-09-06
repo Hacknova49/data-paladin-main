@@ -20,8 +20,9 @@ const Index = () => {
         import('@/services/pythonApi').then(api => api.analyzeDataset(data, filename))
       );
       
-      if (qualityScore >= 90) {
+      if (analyzedDataset.qualityScore >= 90) {
         toast.success(`Dataset loaded successfully!`);
+      }
       
       setDataset(analyzedDataset);
     } catch (error) {
