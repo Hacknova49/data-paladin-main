@@ -1,10 +1,15 @@
-# DataExplorer 🧠✨
+# DataExplorer 🧠✨ (Python-Powered)
 
-A powerful, user-friendly data analysis tool that transforms CSV and Excel files into beautiful insights without requiring any coding knowledge.
+A powerful, user-friendly data analysis tool powered by Python that transforms CSV and Excel files into beautiful insights without requiring any coding knowledge.
 
 ![DataExplorer Demo](https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop)
 
 ## ✨ Features
+
+### 🐍 **Python-Powered Backend**
+- **High-Performance Processing**: Leverages Python's data science ecosystem for fast, reliable analysis
+- **Advanced Analytics**: Statistical analysis, machine learning, and AI-powered insights
+- **Scalable Architecture**: Handles large datasets efficiently with optimized algorithms
 
 ### 📊 Smart Data Analysis
 - **Automatic Type Detection**: Intelligently identifies numeric, categorical, datetime, and text columns
@@ -43,8 +48,14 @@ A powerful, user-friendly data analysis tool that transforms CSV and Excel files
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ and npm
+- **Node.js 18+** and npm
+- **Python 3.8+** with pip
 - Modern web browser (Chrome, Firefox, Safari, Edge)
+
+### Architecture
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Python + FastAPI
+- **Communication**: REST API with JSON
 
 ### Installation
 
@@ -54,27 +65,40 @@ A powerful, user-friendly data analysis tool that transforms CSV and Excel files
    cd data-explorer
    ```
 
-2. **Install dependencies**
+2. **Install frontend dependencies**
    ```bash
    npm install
    ```
 
-3. **Start the development server**
+3. **Install Python backend dependencies**
    ```bash
-   npm run dev
+   cd python_core
+   pip install -r requirements.txt
+   cd ..
    ```
 
-4. **Open your browser**
+4. **Start both servers**
+   ```bash
+   # Option 1: Start both simultaneously
+   npm run start:full
+   
+   # Option 2: Start separately
+   npm run dev          # Frontend (port 8080)
+   npm run dev:python   # Backend (port 8000)
+   ```bash
+
+5. **Open your browser**
    Navigate to `http://localhost:8080`
 
 ### Quick Start
 
-1. **Upload Your Data**: Drag and drop a CSV or Excel file onto the upload area
-2. **Explore**: Browse through the automatically generated data preview and statistics
-3. **Visualize**: Create charts using the visualization tab
-4. **Clean**: Use the data cleaning tools to improve data quality
-5. **Analyze**: Discover insights with AI-powered analytics
-6. **Export**: Download your results in your preferred format
+1. **Ensure Backend is Running**: Check the Python backend status indicator
+2. **Upload Your Data**: Drag and drop a CSV or Excel file onto the upload area
+3. **Explore**: Browse through the automatically generated data preview and statistics
+4. **Visualize**: Create charts using the visualization tab
+5. **Clean**: Use the data cleaning tools to improve data quality
+6. **Analyze**: Discover insights with AI-powered analytics
+7. **Export**: Download your results in your preferred format
 
 ## 📁 Project Structure
 
@@ -83,33 +107,54 @@ src/
 ├── components/          # React components
 │   ├── ui/             # Reusable UI components
 │   ├── DataPreview.tsx # Main data preview component
-│   ├── DataVisualization.tsx
-│   ├── DataCleaning.tsx
+│   ├── DataManipulationPython.tsx
+│   ├── PythonBackendStatus.tsx
 │   └── ...
-├── hooks/              # Custom React hooks
-│   ├── useDataProcessing.ts
-│   ├── useAsyncOperation.ts
+├── hooks/              # React hooks for Python API
+│   ├── usePythonApi.ts
+│   └── ...
+├── services/           # API services
+│   ├── pythonApi.ts    # Python backend communication
 │   └── ...
 ├── types/              # TypeScript type definitions
-├── utils/              # Utility functions
 ├── pages/              # Page components
 └── styles/             # CSS and styling
+
+python_core/            # Python backend
+├── types.py           # Data type definitions
+├── data_utils.py      # Core data processing
+├── data_processing.py # Filtering and manipulation
+├── visualization.py   # Chart data generation
+├── analytics.py       # AI-powered insights
+├── main.py           # FastAPI server
+└── requirements.txt   # Python dependencies
 ```
 
 ## 🛠️ Built With
 
-- **Frontend**: React 18, TypeScript, Vite
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
 - **UI Components**: shadcn/ui, Radix UI, Tailwind CSS
-- **Data Processing**: Papa Parse (CSV), SheetJS (Excel)
 - **Visualizations**: Recharts
-- **State Management**: React Hooks, Context API
 - **File Handling**: React Dropzone
 - **Notifications**: Sonner
+
+### Backend
+- **Python 3.8+** with FastAPI
+- **Data Processing**: Pure Python (no external dependencies for core logic)
+- **API**: RESTful JSON API with automatic documentation
+- **Type Safety**: Pydantic models and Python type hints
+
+### File Processing
+- **CSV**: Papa Parse (frontend)
+- **Excel**: SheetJS (frontend)
+- **Analysis**: Python backend processing
 
 ## 🧪 Testing
 
 ```bash
-# Run tests
+# Run frontend tests
 npm test
 
 # Run tests with coverage
@@ -117,17 +162,37 @@ npm run test:coverage
 
 # Run tests in watch mode
 npm run test:watch
+
+# Test Python backend
+cd python_core
+python -m pytest  # If you add pytest later
 ```
 
 ## 📦 Building for Production
 
 ```bash
-# Build the application
+# Build frontend
 npm run build
 
 # Preview the production build
 npm run preview
+
+# For production deployment, you'll need to:
+# 1. Build the React app
+# 2. Deploy Python backend to a server
+# 3. Update VITE_PYTHON_API_URL to point to production backend
 ```
+
+## 🔧 Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_PYTHON_API_URL=http://localhost:8000
+NODE_ENV=development
+```
+
+For production, update the Python API URL to your deployed backend.
 
 ## 🤝 Contributing
 
@@ -135,38 +200,52 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### Development Workflow
 
+**Prerequisites for Contributors:**
+- Node.js 18+ and npm
+- Python 3.8+ and pip
+- Familiarity with React/TypeScript and Python
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass (`npm test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
+3. Set up both frontend and backend development environments
+4. Make your changes (frontend in `src/`, backend in `python_core/`)
+5. Add tests for new functionality
+6. Ensure all tests pass (`npm test`)
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
 
 ### Code Style
 
-- We use ESLint and Prettier for code formatting
-- Follow TypeScript best practices
+- **Frontend**: ESLint and Prettier for TypeScript/React
+- **Backend**: Follow PEP 8 for Python code
+- Use meaningful commit messages
+- Add type hints for all Python functions
 - Write meaningful commit messages
-- Add JSDoc comments for complex functions
+- Add docstrings for Python functions and JSDoc for TypeScript
 
 ## 📊 Performance
 
-DataExplorer is optimized for performance:
+DataExplorer is optimized for performance with a hybrid architecture:
 
-- **Lazy Loading**: Components load only when needed
-- **Debounced Search**: Prevents excessive filtering operations
-- **Memoized Calculations**: Expensive operations are cached
-- **Virtual Scrolling**: Handles large datasets efficiently
-- **Web Workers**: Heavy computations run in background threads
+### Frontend Optimizations
+- **React Optimizations**: useMemo, useCallback, lazy loading
+- **Debounced Operations**: Prevents excessive API calls
+- **Efficient Rendering**: Virtual scrolling for large tables
+
+### Backend Optimizations  
+- **Pure Python**: Fast processing without heavy dependencies
+- **Memory Efficient**: Optimized data structures and algorithms
+- **Async Processing**: FastAPI with async/await support
+- **Scalable**: Can handle large datasets efficiently
 
 ## 🔒 Security
 
-- **Client-Side Processing**: All data processing happens in your browser
-- **No Data Upload**: Your data never leaves your device
+- **Local Processing**: Data analysis happens on your local Python backend
+- **No External Data Transfer**: Your data stays on your machine
 - **Secure File Handling**: Robust validation and error handling
-- **XSS Protection**: Sanitized data rendering
+- **API Security**: Input validation and error handling
+- **CORS Protection**: Configured for local development
 
 ## 📱 Browser Support
 
@@ -175,14 +254,21 @@ DataExplorer is optimized for performance:
 - Safari 14+
 - Edge 90+
 
+## 🐍 Python Requirements
+
+- Python 3.8 or higher
+- See `python_core/requirements.txt` for dependencies
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
+- [FastAPI](https://fastapi.tiangolo.com/) for the excellent Python web framework
 - [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
 - [Recharts](https://recharts.org/) for the charting library
+- [React](https://reactjs.org/) and [Vite](https://vitejs.dev/) for the frontend framework
 - [Papa Parse](https://www.papaparse.com/) for CSV parsing
 - [SheetJS](https://sheetjs.com/) for Excel file support
 
@@ -195,8 +281,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🗺️ Roadmap
 
-- [ ] **Advanced ML Models**: Support for more sophisticated machine learning algorithms
-- [ ] **Real-time Data**: Connect to live data sources and APIs
+### Backend Enhancements
+- [ ] **Advanced ML Models**: Integration with scikit-learn, pandas
+- [ ] **Database Support**: PostgreSQL, SQLite integration
+- [ ] **Streaming Data**: Real-time data processing capabilities
+
+### Frontend & General
 - [ ] **Collaboration**: Multi-user editing and sharing capabilities
 - [ ] **Custom Plugins**: Extensible architecture for custom analysis tools
 - [ ] **Mobile App**: Native mobile applications for iOS and Android
@@ -204,4 +294,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with ❤️ by the DataExplorer team
+Made with ❤️ and 🐍 by the DataExplorer team

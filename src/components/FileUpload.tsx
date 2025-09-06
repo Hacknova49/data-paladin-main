@@ -11,6 +11,7 @@ import { toast } from '@/components/ui/sonner';
 interface FileUploadProps {
   onDataLoaded: (data: any[], filename: string) => void;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 interface ParsedFileResult {
@@ -18,7 +19,7 @@ interface ParsedFileResult {
   filename: string;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading, disabled }) => {
   const { execute: executeFileProcessing, isLoading: isProcessingFile } = useAsyncOperation<ParsedFileResult>({
     onSuccess: (result) => {
       onDataLoaded(result.data, result.filename);
@@ -115,10 +116,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading 
       'application/vnd.ms-excel': ['.xls']
     },
     multiple: false,
-    disabled: isLoading || isProcessingFile
+    disabled: isLoading || isProcessingFile || disabled
   });
 
-  const isDisabled = isLoading || isProcessingFile;
+  const isDisabled = isLoading || isProcessingFile || disabled;
 
   return (
     <Card className={cn(
@@ -143,11 +144,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading 
         
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">
-            {isDragActive ? 'Drop your file here' : 'Upload your dataset'}
+            {disabled 
+              ? 'Python backend required' 
+              : isDragActive 
+                ? 'Drop your file here' 
+                : 'Upload your dataset'
+            }
           </h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Drag and drop your CSV or Excel file here, or click to browse. 
-            We'll automatically detect column types and prepare your data for exploration.
+            {disabled
+              ? 'Please ensure the Python backend is running to process your data files.'
+              : 'Drag and drop your CSV or Excel file here, or click to browse. We\'ll automatically detect column types and prepare your data for exploration.'
+            }
           </p>
         </div>
         
@@ -164,7 +172,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded, isLoading 
         
         {isDisabled && (
           <div className="text-sm text-primary">
-            Processing your file...
+            {disabled 
+              ? 'Backend unavailable'
+              : 'Processing your file...'
+            }
           </div>
         )}
       </div>

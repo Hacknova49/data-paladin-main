@@ -3,10 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dataset } from '@/types/data';
-import { formatBytes, getColumnIcon } from '@/utils/dataUtils';
 import { Database, Rows, Columns, HardDrive, BarChart3, Filter, TrendingUp } from 'lucide-react';
 import { DataVisualization } from './DataVisualization';
-import { DataManipulation } from './DataManipulation';
+import { DataManipulationPython } from './DataManipulationPython';
 import { DataStatistics } from './DataStatistics';
 import { DataCleaning } from './DataCleaning';
 import { AdvancedAnalytics } from './AdvancedAnalytics';
@@ -16,6 +15,18 @@ interface DataPreviewProps {
   dataset: Dataset;
   maxRows?: number;
 }
+
+// Utility functions moved inline since we removed dataUtils
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const getColumnIcon = (type: string): string => {
+};
 
 export const DataPreview: React.FC<DataPreviewProps> = ({ dataset, maxRows = 100 }) => {
   const [currentDataset, setCurrentDataset] = useState<Dataset>(dataset);
@@ -184,7 +195,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ dataset, maxRows = 100
         </TabsContent>
 
         <TabsContent value="manipulate">
-          <DataManipulation 
+          <DataManipulationPython 
             dataset={currentDataset} 
             onDatasetChange={setCurrentDataset}
           />
