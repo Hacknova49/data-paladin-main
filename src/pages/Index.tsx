@@ -30,7 +30,9 @@ const Index = () => {
       <PixelBlast className="opacity-30" />
       
       {/* Hero Section */}
-      <div className="relative z-10 border-b bg-gradient-to-br from-background/95 to-accent/5 backdrop-blur-sm">
+      <div className="relative z-10 border-b bg-gradient-to-br from-background/95 to-accent/5 backdrop-blur-sm overflow-hidden">
+        {/* Animated Background for Hero */}
+        <PixelBlast className="opacity-20" />
         <div className="container mx-auto px-4 py-16">
           <div className="text-center space-y-6 max-w-4xl mx-auto">
             <div className="flex items-center justify-center gap-2 mb-4">
